@@ -1,0 +1,25 @@
+{
+  "name": "aivis-speech-discord-bot",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.10",
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun run tsc --noEmit && bun build src/index.ts --outdir=dist --target=bun --external @discordjs/opus --external sodium-native --external @snazzah/davey",
+    "start": "bun run dist/index.js"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.19.0",
+    "@snazzah/davey": "^0.1.9",
+    "@zodios/core": "^10.9.6",
+    "discord.js": "^14.25.1",
+    "ioredis": "^5.8.2",
+    "sodium-native": "^5.0.10",
+    "zod": "^4.2.1"
+  }
+}

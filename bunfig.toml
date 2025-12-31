@@ -1,0 +1,14 @@
+[test]
+coverage = true
+# coverageSkipTestFiles = true
+# coverageIgnoreSourcemaps = true
+# coverageThreshold = 0.9
+
+[install]
+auto = "auto"
+frozenLockfile = false
+# save = true
+
+[run]
+# equivalent to `bun --bun` for all `bun run` commands
+bun = true

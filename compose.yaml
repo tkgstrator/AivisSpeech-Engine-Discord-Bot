@@ -1,0 +1,31 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+    depends_on:
+      redis:
+        condition: service_healthy
+      aivis:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+  aivis:
+    image: tkgling/aivisspeech-engine:cuda12.8.1-cudnn-1.1.0
+
+  redis:
+    image: redis:8.4.0
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis-data:
+    name: redis-data
