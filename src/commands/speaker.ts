@@ -50,68 +50,31 @@ export const speakerCommand = new SlashCommandBuilder()
       .setName('set')
       .setDescription('話者を設定します')
       .addStringOption((option) =>
-        option.setName('name').setDescription('話者名').setRequired(true).setAutocomplete(true)
-      )
+        option.setName('name').setDescription('話者名').setRequired(true).setAutocomplete(true),
+      ),
   )
   .addSubcommand((subcommand) => subcommand.setName('current').setDescription('現在の話者設定を表示します'))
-  .addSubcommandGroup((group) =>
-    group
+  .addSubcommand((subcommand) =>
+    subcommand
       .setName('config')
       .setDescription('話者ごとの詳細設定')
-      .addSubcommand((subcommand) => subcommand.setName('show').setDescription('現在の設定を表示します'))
-      .addSubcommand((subcommand) =>
-        subcommand
-          .setName('speed')
-          .setDescription('話速を設定します（0.5〜2.0）')
-          .addNumberOption((option) =>
-            option
-              .setName('value')
-              .setDescription('話速（0.5〜2.0、デフォルト: 1.0）')
-              .setRequired(true)
-              .setMinValue(0.5)
-              .setMaxValue(2.0)
-          )
+      .addStringOption((option) =>
+        option
+          .setName('setting')
+          .setDescription('設定項目')
+          .setRequired(true)
+          .addChoices(
+            { name: 'show - 現在の設定を表示', value: 'show' },
+            { name: 'speed - 話速（0.5〜2.0）', value: 'speed' },
+            { name: 'pitch - 音高（-0.15〜0.15）', value: 'pitch' },
+            { name: 'volume - 音量（0.0〜2.0）', value: 'volume' },
+            { name: 'intonation - 抑揚（0.0〜2.0）', value: 'intonation' },
+            { name: 'reset - 設定をデフォルトに戻す', value: 'reset' },
+          ),
       )
-      .addSubcommand((subcommand) =>
-        subcommand
-          .setName('pitch')
-          .setDescription('音高を設定します（-0.15〜0.15）')
-          .addNumberOption((option) =>
-            option
-              .setName('value')
-              .setDescription('音高（-0.15〜0.15、デフォルト: 0.0）')
-              .setRequired(true)
-              .setMinValue(-0.15)
-              .setMaxValue(0.15)
-          )
-      )
-      .addSubcommand((subcommand) =>
-        subcommand
-          .setName('volume')
-          .setDescription('音量を設定します（0.0〜2.0）')
-          .addNumberOption((option) =>
-            option
-              .setName('value')
-              .setDescription('音量（0.0〜2.0、デフォルト: 1.0）')
-              .setRequired(true)
-              .setMinValue(0.0)
-              .setMaxValue(2.0)
-          )
-      )
-      .addSubcommand((subcommand) =>
-        subcommand
-          .setName('intonation')
-          .setDescription('抑揚を設定します（0.0〜2.0）')
-          .addNumberOption((option) =>
-            option
-              .setName('value')
-              .setDescription('抑揚（0.0〜2.0、デフォルト: 1.0）')
-              .setRequired(true)
-              .setMinValue(0.0)
-              .setMaxValue(2.0)
-          )
-      )
-      .addSubcommand((subcommand) => subcommand.setName('reset').setDescription('設定をデフォルトに戻します'))
+      .addNumberOption((option) =>
+        option.setName('value').setDescription('設定する値（speed/pitch/volume/intonationの場合）').setRequired(false),
+      ),
   )
 
 /**
@@ -165,14 +128,15 @@ const createStyleSelectMenu = (speaker: Speaker, customId: string): ActionRowBui
  * /speaker コマンドのハンドラー
  */
 export const handleSpeakerCommand = async (interaction: ChatInputCommandInteraction): Promise<void> => {
-  const group = interaction.options.getSubcommandGroup()
   const subcommand = interaction.options.getSubcommand()
 
-  // speaker config サブグループの処理
-  if (group === 'config') {
+  // speaker config サブコマンドの処理
+  if (subcommand === 'config') {
     const userId = interaction.user.id
+    const setting = interaction.options.getString('setting', true)
+    const value = interaction.options.getNumber('value')
 
-    switch (subcommand) {
+    switch (setting) {
       case 'show': {
         try {
           const settings = await getUserSettings(userId)
@@ -184,7 +148,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
               { name: '話速', value: `${settings.speedScale}`, inline: true },
               { name: '音高', value: `${settings.pitchScale}`, inline: true },
               { name: '音量', value: `${settings.volumeScale}`, inline: true },
-              { name: '抑揚', value: `${settings.intonationScale}`, inline: true }
+              { name: '抑揚', value: `${settings.intonationScale}`, inline: true },
             )
 
           await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
@@ -192,79 +156,131 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           console.error('Failed to get settings:', error)
           await interaction.reply({
             content: '設定の取得に失敗しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         }
         break
       }
 
       case 'speed': {
-        const value = interaction.options.getNumber('value', true)
+        if (value === null) {
+          await interaction.reply({
+            content: '話速を設定するには value オプションが必要です（0.5〜2.0）',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
+        if (value < 0.5 || value > 2.0) {
+          await interaction.reply({
+            content: '話速は 0.5〜2.0 の範囲で指定してください',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
         try {
           await updateUserSettings(userId, { speedScale: value })
           await interaction.reply({
             content: `話速を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         } catch (error) {
           console.error('Failed to set speed:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         }
         break
       }
 
       case 'pitch': {
-        const value = interaction.options.getNumber('value', true)
+        if (value === null) {
+          await interaction.reply({
+            content: '音高を設定するには value オプションが必要です（-0.15〜0.15）',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
+        if (value < -0.15 || value > 0.15) {
+          await interaction.reply({
+            content: '音高は -0.15〜0.15 の範囲で指定してください',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
         try {
           await updateUserSettings(userId, { pitchScale: value })
           await interaction.reply({
             content: `音高を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         } catch (error) {
           console.error('Failed to set pitch:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         }
         break
       }
 
       case 'volume': {
-        const value = interaction.options.getNumber('value', true)
+        if (value === null) {
+          await interaction.reply({
+            content: '音量を設定するには value オプションが必要です（0.0〜2.0）',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
+        if (value < 0.0 || value > 2.0) {
+          await interaction.reply({
+            content: '音量は 0.0〜2.0 の範囲で指定してください',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
         try {
           await updateUserSettings(userId, { volumeScale: value })
           await interaction.reply({
             content: `音量を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         } catch (error) {
           console.error('Failed to set volume:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         }
         break
       }
 
       case 'intonation': {
-        const value = interaction.options.getNumber('value', true)
+        if (value === null) {
+          await interaction.reply({
+            content: '抑揚を設定するには value オプションが必要です（0.0〜2.0）',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
+        if (value < 0.0 || value > 2.0) {
+          await interaction.reply({
+            content: '抑揚は 0.0〜2.0 の範囲で指定してください',
+            flags: MessageFlags.Ephemeral,
+          })
+          return
+        }
         try {
           await updateUserSettings(userId, { intonationScale: value })
           await interaction.reply({
             content: `抑揚を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         } catch (error) {
           console.error('Failed to set intonation:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         }
         break
@@ -275,13 +291,13 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           await deleteUserSettings(userId)
           await interaction.reply({
             content: '設定をデフォルトに戻しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         } catch (error) {
           console.error('Failed to reset settings:', error)
           await interaction.reply({
             content: 'リセットに失敗しました',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlags.Ephemeral,
           })
         }
         break
