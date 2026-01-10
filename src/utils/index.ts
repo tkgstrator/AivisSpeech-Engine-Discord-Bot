@@ -1,5 +1,5 @@
 export { aivisClient } from './client'
-export { getSpeakers, createAudioQuery, synthesize, textToSpeech, textToSpeechWithSettings } from './tts'
+export { deleteGuildSettings, getGuildSettings, setGuildSettings, updateGuildSettings } from './guildSettings'
 export {
   redis,
   getUserSettings,
@@ -8,7 +8,8 @@ export {
   deleteUserSettings,
   getUserSpeakerId,
   setUserSpeakerId,
-  pingRedis,
+  pingRedis
 } from './redis'
-export { getUserDict, addUserDictWord, deleteUserDictWord } from './userDict'
 export { preprocessForTts } from './textPreprocess'
+export { createAudioQuery, getSpeakers, synthesize, textToSpeech, textToSpeechWithSettings } from './tts'
+export { addUserDictWord, deleteUserDictWord, getUserDict } from './userDict'

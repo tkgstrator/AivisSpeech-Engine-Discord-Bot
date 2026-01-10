@@ -2,10 +2,10 @@ import { type ChatInputCommandInteraction, EmbedBuilder, MessageFlags, SlashComm
 import { addUserDictWord, deleteUserDictWord, getUserDict } from '../utils'
 
 /**
- * /dict コマンドの定義
+ * /dictionary コマンドの定義
  */
-export const dictCommand = new SlashCommandBuilder()
-  .setName('dict')
+export const dictionaryCommand = new SlashCommandBuilder()
+  .setName('dictionary')
   .setDescription('ユーザー辞書を管理します')
   .addSubcommand((subcommand) => subcommand.setName('list').setDescription('登録されている単語の一覧を表示します'))
   .addSubcommand((subcommand) =>
@@ -36,7 +36,7 @@ export const dictCommand = new SlashCommandBuilder()
   )
   .addSubcommand((subcommand) =>
     subcommand
-      .setName('delete')
+      .setName('remove')
       .setDescription('単語を削除します')
       .addStringOption((option) =>
         option.setName('uuid').setDescription('削除する単語のUUID（listコマンドで確認できます）').setRequired(true),
@@ -44,9 +44,9 @@ export const dictCommand = new SlashCommandBuilder()
   )
 
 /**
- * /dict コマンドのハンドラー
+ * /dictionary コマンドのハンドラー
  */
-export const handleDictCommand = async (interaction: ChatInputCommandInteraction): Promise<void> => {
+export const handleDictionaryCommand = async (interaction: ChatInputCommandInteraction): Promise<void> => {
   const subcommand = interaction.options.getSubcommand()
 
   switch (subcommand) {
@@ -109,7 +109,7 @@ export const handleDictCommand = async (interaction: ChatInputCommandInteraction
       break
     }
 
-    case 'delete': {
+    case 'remove': {
       const uuid = interaction.options.getString('uuid', true)
 
       await interaction.deferReply({ flags: MessageFlags.Ephemeral })

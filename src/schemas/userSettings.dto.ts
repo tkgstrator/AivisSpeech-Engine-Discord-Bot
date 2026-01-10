@@ -13,7 +13,7 @@ export const UserSettingsSchema = z.object({
   /** 音量（0.0〜2.0） */
   volumeScale: z.number().min(0.0).max(2.0).default(1.0),
   /** 抑揚（0.0〜2.0） */
-  intonationScale: z.number().min(0.0).max(2.0).default(1.0),
+  intonationScale: z.number().min(0.0).max(2.0).default(1.0)
 })
 
 /**

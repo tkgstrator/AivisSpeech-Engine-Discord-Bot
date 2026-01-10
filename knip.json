@@ -8,18 +8,12 @@
     "!src/**/*.d.ts"
   ],
   "ignore": [
-    "src/app/routeTree.gen.ts",
-    "src/components/ui/*.tsx",
-    "src/locales/*.{ts,tsx}",
     "**/*.test.{ts,tsx}",
     "**/*.spec.{ts,tsx}",
     "__tests__/**"
   ],
   "ignoreDependencies": [
-    "@biomejs/biome",
-    "tailwindcss",
-    "tailwindcss-safe-area",
-    "tw-animate-css"
+    "@biomejs/biome"
   ],
   "ignoreBinaries": [],
   "rules": {
@@ -36,6 +30,8 @@
     "duplicates": "error"
   },
   "vite": {
-    "config": ["vite.config.ts"]
+    "config": [
+      "vite.config.ts"
+    ]
   }
 }

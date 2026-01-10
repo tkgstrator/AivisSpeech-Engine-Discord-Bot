@@ -1,7 +1,7 @@
 import { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes } from 'discord.js'
 import { commands, executeAutocomplete, executeCommand } from './commands'
 import { config } from './config'
-import { getUserSettings, preprocessForTts, textToSpeechWithSettings } from './utils'
+import { getGuildSettings, getUserSettings, preprocessForTts, textToSpeechWithSettings } from './utils'
 import { connectToChannel, destroyPlayer, disconnectFromChannel, enqueueAudio, getConnection } from './voice'
 
 /**
@@ -74,8 +74,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 /**
  * ボイスステート変更時の処理
- * - ユーザーがVCに参加 → Botも参加
+ * - ユーザーがVCに参加 → Botも参加 + アナウンス
  * - VCが空になった → Botは離脱
+ * - ユーザーがVCから離脱 → アナウンス
  */
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   const guildId = newState.guild.id
@@ -84,6 +85,9 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   if (newState.member?.user.bot) {
     return
   }
+
+  // ギルド設定を取得
+  const guildSettings = await getGuildSettings(guildId)
 
   // ユーザーがVCに参加した場合
   if (!oldState.channel && newState.channel) {
@@ -97,11 +101,39 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
         console.error('Failed to connect to voice channel:', error)
       }
     }
+
+    // 参加アナウンス
+    const connection = existingConnection || getConnection(guildId)
+    if (connection && guildSettings.announceJoin && newState.member) {
+      try {
+        const userSettings = await getUserSettings(newState.member.user.id)
+        const username = newState.member.displayName || newState.member.user.username
+        const announceText = `${username}が参加しました`
+        const audioStream = await textToSpeechWithSettings(announceText, userSettings)
+        enqueueAudio(guildId, audioStream, connection)
+      } catch (error) {
+        console.error('Failed to announce join:', error)
+      }
+    }
     return
   }
 
   // ユーザーがVCから離脱した場合
   if (oldState.channel && !newState.channel) {
+    // 離脱アナウンス
+    const connection = getConnection(guildId)
+    if (connection && guildSettings.announceLeave && newState.member) {
+      try {
+        const userSettings = await getUserSettings(newState.member.user.id)
+        const username = newState.member.displayName || newState.member.user.username
+        const announceText = `${username}が退席しました`
+        const audioStream = await textToSpeechWithSettings(announceText, userSettings)
+        enqueueAudio(guildId, audioStream, connection)
+      } catch (error) {
+        console.error('Failed to announce leave:', error)
+      }
+    }
+
     // 残っているメンバーをチェック（Bot除く）
     const remainingMembers = oldState.channel.members.filter((member) => !member.user.bot)
 
@@ -134,7 +166,7 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 /**
  * メッセージ受信時のTTS処理
  * - Botがギルドに接続中の場合のみ処理
- * - 送信者がVCにいる場合のみ読み上げ
+ * - 送信者がVCにいる場合のみ読み上げ（readNonVcUsersがtrueの場合は例外）
  */
 client.on(Events.MessageCreate, async (message) => {
   // Botのメッセージは無視
@@ -152,13 +184,22 @@ client.on(Events.MessageCreate, async (message) => {
   // Botが接続していない場合は無視
   if (!connection) return
 
+  // ギルド設定を取得
+  const guildSettings = await getGuildSettings(guildId)
+
   // 送信者がVCにいるか確認
   const member = message.member
-  if (!member?.voice.channel) return
+  const isInVoiceChannel = member?.voice.channel !== null && member?.voice.channel !== undefined
 
   // BotがいるVCと同じか確認
   const botVoiceChannelId = message.guild.members.me?.voice.channelId
-  if (member.voice.channelId !== botVoiceChannelId) return
+  const isInSameChannel = member?.voice.channelId === botVoiceChannelId
+
+  // readNonVcUsersがfalseの場合、VCにいない人のメッセージは無視
+  if (!guildSettings.readNonVcUsers && !isInVoiceChannel) return
+
+  // readNonVcUsersがtrueでもBotと同じVCにいない場合は無視
+  if (!isInSameChannel) return
 
   // テキストを前処理
   const processedText = preprocessForTts(message.content)
@@ -166,10 +207,10 @@ client.on(Events.MessageCreate, async (message) => {
 
   try {
     // ユーザー設定を取得
-    const settings = await getUserSettings(message.author.id)
+    const userSettings = await getUserSettings(message.author.id)
 
     // TTSで音声を生成
-    const audioStream = await textToSpeechWithSettings(processedText, settings)
+    const audioStream = await textToSpeechWithSettings(processedText, userSettings)
 
     // キューに追加して再生
     enqueueAudio(guildId, audioStream, connection)

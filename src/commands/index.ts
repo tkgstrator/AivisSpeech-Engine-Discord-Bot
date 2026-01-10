@@ -1,27 +1,27 @@
 import type { AutocompleteInteraction, ChatInputCommandInteraction } from 'discord.js'
-import { dictCommand, handleDictCommand } from './dict'
-import { handleSettingsCommand, settingsCommand } from './settings'
+import { configCommand, handleConfigCommand } from './config'
+import { dictionaryCommand, handleDictionaryCommand } from './dict'
 import { handleSpeakerAutocomplete, handleSpeakerCommand, speakerCommand } from './speaker'
 
 /**
  * 全スラッシュコマンドの定義
  */
-export const commands = [speakerCommand.toJSON(), settingsCommand.toJSON(), dictCommand.toJSON()]
+export const commands = [speakerCommand.toJSON(), configCommand.toJSON(), dictionaryCommand.toJSON()]
 
 /**
  * コマンドハンドラーのマップ
  */
 const commandHandlers: Record<string, (interaction: ChatInputCommandInteraction) => Promise<void>> = {
   speaker: handleSpeakerCommand,
-  settings: handleSettingsCommand,
-  dict: handleDictCommand,
+  config: handleConfigCommand,
+  dictionary: handleDictionaryCommand,
 }
 
 /**
  * オートコンプリートハンドラーのマップ
  */
 const autocompleteHandlers: Record<string, (interaction: AutocompleteInteraction) => Promise<void>> = {
-  speaker: handleSpeakerAutocomplete,
+  speaker: handleSpeakerAutocomplete
 }
 
 /**
