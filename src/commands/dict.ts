@@ -1,5 +1,5 @@
-import { type ChatInputCommandInteraction, EmbedBuilder, MessageFlags, SlashCommandBuilder } from 'discord.js'
-import { addUserDictWord, deleteUserDictWord, getUserDict } from '../utils'
+import { type ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from 'discord.js'
+import { addUserDictWord, deleteUserDictWord } from '../utils'
 
 /**
  * /dictionary コマンドの定義
@@ -7,7 +7,6 @@ import { addUserDictWord, deleteUserDictWord, getUserDict } from '../utils'
 export const dictionaryCommand = new SlashCommandBuilder()
   .setName('dictionary')
   .setDescription('ユーザー辞書を管理します')
-  .addSubcommand((subcommand) => subcommand.setName('list').setDescription('登録されている単語の一覧を表示します'))
   .addSubcommand((subcommand) =>
     subcommand
       .setName('add')
@@ -50,43 +49,6 @@ export const handleDictionaryCommand = async (interaction: ChatInputCommandInter
   const subcommand = interaction.options.getSubcommand()
 
   switch (subcommand) {
-    case 'list': {
-      await interaction.deferReply()
-      try {
-        const dict = await getUserDict()
-        const entries = Object.entries(dict)
-
-        if (entries.length === 0) {
-          await interaction.editReply('登録されている単語はありません')
-          return
-        }
-
-        const embed = new EmbedBuilder().setTitle('ユーザー辞書').setColor(0x00ae86)
-
-        // 最大25件まで表示
-        for (const [uuid, word] of entries.slice(0, 25)) {
-          const pronunciation = Array.isArray(word.pronunciation) ? word.pronunciation.join('') : word.pronunciation
-          const accentType = Array.isArray(word.accent_type) ? word.accent_type.join(',') : word.accent_type
-
-          embed.addFields({
-            name: word.surface,
-            value: `読み: ${pronunciation}\nアクセント: ${accentType}\nUUID: \`${uuid}\``,
-            inline: true
-          })
-        }
-
-        if (entries.length > 25) {
-          embed.setFooter({ text: `他 ${entries.length - 25} 件の単語があります` })
-        }
-
-        await interaction.editReply({ embeds: [embed] })
-      } catch (error) {
-        console.error('Failed to get user dict:', error)
-        await interaction.editReply('辞書の取得に失敗しました')
-      }
-      break
-    }
-
     case 'add': {
       const surface = interaction.options.getString('surface', true)
       const pronunciation = interaction.options.getString('pronunciation', true)

@@ -10,7 +10,14 @@ import {
   type StringSelectMenuInteraction
 } from 'discord.js'
 import type { Speaker } from '../schemas/aivis.dto'
-import { deleteUserSettings, getSpeakers, getUserSettings, updateUserSettings } from '../utils'
+import {
+  deleteUserSettings,
+  getCurrentSpeakerConfig,
+  getCurrentSpeakerId,
+  getSpeakers,
+  setCurrentSpeakerId,
+  updateCurrentSpeakerConfig
+} from '../utils'
 
 /**
  * 話者キャッシュ
@@ -44,16 +51,15 @@ const updateSpeakerCache = async (): Promise<Speaker[]> => {
 export const speakerCommand = new SlashCommandBuilder()
   .setName('speaker')
   .setDescription('話者を設定します')
-  .addSubcommand((subcommand) => subcommand.setName('list').setDescription('利用可能な話者の一覧を表示します'))
   .addSubcommand((subcommand) =>
     subcommand
       .setName('set')
       .setDescription('話者を設定します')
       .addStringOption((option) =>
-        option.setName('name').setDescription('話者名').setRequired(true).setAutocomplete(true),
-      ),
+        option.setName('name').setDescription('話者名').setRequired(true).setAutocomplete(true)
+      )
   )
-  .addSubcommand((subcommand) => subcommand.setName('current').setDescription('現在の話者設定を表示します'))
+  .addSubcommand((subcommand) => subcommand.setName('clear').setDescription('話者設定をリセットします'))
   .addSubcommand((subcommand) =>
     subcommand
       .setName('config')
@@ -69,12 +75,12 @@ export const speakerCommand = new SlashCommandBuilder()
             { name: 'pitch - 音高（-0.15〜0.15）', value: 'pitch' },
             { name: 'volume - 音量（0.0〜2.0）', value: 'volume' },
             { name: 'intonation - 抑揚（0.0〜2.0）', value: 'intonation' },
-            { name: 'reset - 設定をデフォルトに戻す', value: 'reset' },
-          ),
+            { name: 'reset - 設定をデフォルトに戻す', value: 'reset' }
+          )
       )
       .addNumberOption((option) =>
-        option.setName('value').setDescription('設定する値（speed/pitch/volume/intonationの場合）').setRequired(false),
-      ),
+        option.setName('value').setDescription('設定する値（speed/pitch/volume/intonationの場合）').setRequired(false)
+      )
   )
 
 /**
@@ -139,16 +145,17 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
     switch (setting) {
       case 'show': {
         try {
-          const settings = await getUserSettings(userId)
+          const speakerId = await getCurrentSpeakerId(userId)
+          const config = await getCurrentSpeakerConfig(userId)
           const embed = new EmbedBuilder()
             .setTitle('現在のTTS設定')
             .setColor(0x00ae86)
             .addFields(
-              { name: '話者ID', value: `${settings.speakerId}`, inline: true },
-              { name: '話速', value: `${settings.speedScale}`, inline: true },
-              { name: '音高', value: `${settings.pitchScale}`, inline: true },
-              { name: '音量', value: `${settings.volumeScale}`, inline: true },
-              { name: '抑揚', value: `${settings.intonationScale}`, inline: true },
+              { name: '話者ID', value: `${speakerId}`, inline: true },
+              { name: '話速', value: `${config.speedScale}`, inline: true },
+              { name: '音高', value: `${config.pitchScale}`, inline: true },
+              { name: '音量', value: `${config.volumeScale}`, inline: true },
+              { name: '抑揚', value: `${config.intonationScale}`, inline: true }
             )
 
           await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
@@ -156,7 +163,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           console.error('Failed to get settings:', error)
           await interaction.reply({
             content: '設定の取得に失敗しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         }
         break
@@ -166,28 +173,28 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
         if (value === null) {
           await interaction.reply({
             content: '話速を設定するには value オプションが必要です（0.5〜2.0）',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         if (value < 0.5 || value > 2.0) {
           await interaction.reply({
             content: '話速は 0.5〜2.0 の範囲で指定してください',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         try {
-          await updateUserSettings(userId, { speedScale: value })
+          await updateCurrentSpeakerConfig(userId, { speedScale: value })
           await interaction.reply({
             content: `話速を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         } catch (error) {
           console.error('Failed to set speed:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         }
         break
@@ -197,28 +204,28 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
         if (value === null) {
           await interaction.reply({
             content: '音高を設定するには value オプションが必要です（-0.15〜0.15）',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         if (value < -0.15 || value > 0.15) {
           await interaction.reply({
             content: '音高は -0.15〜0.15 の範囲で指定してください',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         try {
-          await updateUserSettings(userId, { pitchScale: value })
+          await updateCurrentSpeakerConfig(userId, { pitchScale: value })
           await interaction.reply({
             content: `音高を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         } catch (error) {
           console.error('Failed to set pitch:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         }
         break
@@ -228,28 +235,28 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
         if (value === null) {
           await interaction.reply({
             content: '音量を設定するには value オプションが必要です（0.0〜2.0）',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         if (value < 0.0 || value > 2.0) {
           await interaction.reply({
             content: '音量は 0.0〜2.0 の範囲で指定してください',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         try {
-          await updateUserSettings(userId, { volumeScale: value })
+          await updateCurrentSpeakerConfig(userId, { volumeScale: value })
           await interaction.reply({
             content: `音量を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         } catch (error) {
           console.error('Failed to set volume:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         }
         break
@@ -259,28 +266,28 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
         if (value === null) {
           await interaction.reply({
             content: '抑揚を設定するには value オプションが必要です（0.0〜2.0）',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         if (value < 0.0 || value > 2.0) {
           await interaction.reply({
             content: '抑揚は 0.0〜2.0 の範囲で指定してください',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
           return
         }
         try {
-          await updateUserSettings(userId, { intonationScale: value })
+          await updateCurrentSpeakerConfig(userId, { intonationScale: value })
           await interaction.reply({
             content: `抑揚を ${value} に設定しました`,
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         } catch (error) {
           console.error('Failed to set intonation:', error)
           await interaction.reply({
             content: '設定に失敗しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         }
         break
@@ -291,13 +298,13 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           await deleteUserSettings(userId)
           await interaction.reply({
             content: '設定をデフォルトに戻しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         } catch (error) {
           console.error('Failed to reset settings:', error)
           await interaction.reply({
             content: 'リセットに失敗しました',
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral
           })
         }
         break
@@ -308,31 +315,19 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
 
   // 通常のサブコマンド処理
   switch (subcommand) {
-    case 'list': {
-      await interaction.deferReply()
+    case 'clear': {
       try {
-        const speakers = await updateSpeakerCache()
-        // デフォルトキャラクターを除外
-        const filteredSpeakers = speakers.filter((s) => !EXCLUDED_SPEAKER_UUIDS.includes(s.speaker_uuid))
-        const embed = new EmbedBuilder().setTitle('話者一覧').setColor(0x00ae86)
-
-        for (const speaker of filteredSpeakers.slice(0, 25)) {
-          const styles = speaker.styles.map((style) => `${style.name} (ID: ${style.id})`).join('\n')
-          embed.addFields({
-            name: speaker.name,
-            value: styles || 'スタイルなし',
-            inline: true
-          })
-        }
-
-        if (filteredSpeakers.length > 25) {
-          embed.setFooter({ text: `他 ${filteredSpeakers.length - 25} 人の話者があります` })
-        }
-
-        await interaction.editReply({ embeds: [embed] })
+        await deleteUserSettings(interaction.user.id)
+        await interaction.reply({
+          content: '話者設定をリセットしました',
+          flags: MessageFlags.Ephemeral
+        })
       } catch (error) {
-        console.error('Failed to get speakers:', error)
-        await interaction.editReply('話者一覧の取得に失敗しました')
+        console.error('Failed to clear speaker settings:', error)
+        await interaction.reply({
+          content: '設定のリセットに失敗しました',
+          flags: MessageFlags.Ephemeral
+        })
       }
       break
     }
@@ -356,7 +351,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
         const firstStyle = speaker.styles[0]
         if (speaker.styles.length === 1 && firstStyle) {
           const styleId = firstStyle.id
-          await updateUserSettings(interaction.user.id, { speakerId: styleId })
+          await setCurrentSpeakerId(interaction.user.id, styleId)
           await interaction.reply({
             content: `話者を **${speaker.name}** (${firstStyle.name}) に設定しました`,
             flags: MessageFlags.Ephemeral
@@ -387,7 +382,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           const selectedStyleId = Number.parseInt(selectedValue, 10)
           const selectedStyle = speaker.styles.find((s) => s.id === selectedStyleId)
 
-          await updateUserSettings(interaction.user.id, { speakerId: selectedStyleId })
+          await setCurrentSpeakerId(interaction.user.id, selectedStyleId)
           await selectInteraction.update({
             content: `話者を **${speaker.name}** (${selectedStyle?.name}) に設定しました`,
             components: []
@@ -403,35 +398,6 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
         console.error('Failed to set speaker:', error)
         await interaction.reply({
           content: '話者の設定に失敗しました',
-          flags: MessageFlags.Ephemeral
-        })
-      }
-      break
-    }
-
-    case 'current': {
-      try {
-        const settings = await getUserSettings(interaction.user.id)
-        const speakers = await updateSpeakerCache()
-
-        // 現在の話者とスタイル名を検索
-        let speakerInfo = `ID: ${settings.speakerId}`
-        for (const speaker of speakers) {
-          const style = speaker.styles.find((s) => s.id === settings.speakerId)
-          if (style) {
-            speakerInfo = `**${speaker.name}** (${style.name}) - ID: ${settings.speakerId}`
-            break
-          }
-        }
-
-        await interaction.reply({
-          content: `現在の話者: ${speakerInfo}`,
-          flags: MessageFlags.Ephemeral
-        })
-      } catch (error) {
-        console.error('Failed to get current speaker:', error)
-        await interaction.reply({
-          content: '設定の取得に失敗しました',
           flags: MessageFlags.Ephemeral
         })
       }

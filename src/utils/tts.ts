@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { config } from '../config'
 import type { AudioQuery, Speaker } from '../schemas/aivis.dto'
-import type { UserSettings } from '../schemas/userSettings.dto'
+import type { SpeakerConfig } from '../schemas/userSettings.dto'
 import { aivisClient } from './client'
 
 /**
@@ -51,29 +51,34 @@ export const textToSpeech = async (text: string, speakerId: number): Promise<Buf
 /**
  * ユーザー設定を適用してテキストを音声合成する
  * @param text 合成するテキスト
- * @param settings ユーザー設定
+ * @param speakerId 話者ID
+ * @param config 話者設定
  * @returns WAV音声データのReadable Stream
  */
-export const textToSpeechWithSettings = async (text: string, settings: UserSettings): Promise<Buffer> => {
-  console.debug('TTS request:', { text, speakerId: settings.speakerId })
+export const textToSpeechWithSettings = async (
+  text: string,
+  speakerId: number,
+  config: SpeakerConfig
+): Promise<Buffer> => {
+  console.debug('TTS request:', { text, speakerId })
 
   // AudioQueryを作成
-  const audioQuery = await createAudioQuery(text, settings.speakerId)
+  const audioQuery = await createAudioQuery(text, speakerId)
 
   // ユーザー設定を適用（デフォルト値と異なる場合のみ）
-  if (settings.speedScale !== 1.0) {
-    audioQuery.speedScale = settings.speedScale
+  if (config.speedScale !== 1.0) {
+    audioQuery.speedScale = config.speedScale
   }
-  if (settings.pitchScale !== 0.0) {
-    audioQuery.pitchScale = settings.pitchScale
+  if (config.pitchScale !== 0.0) {
+    audioQuery.pitchScale = config.pitchScale
   }
-  if (settings.volumeScale !== 1.0) {
-    audioQuery.volumeScale = settings.volumeScale
+  if (config.volumeScale !== 1.0) {
+    audioQuery.volumeScale = config.volumeScale
   }
-  if (settings.intonationScale !== 1.0) {
-    audioQuery.intonationScale = settings.intonationScale
+  if (config.intonationScale !== 1.0) {
+    audioQuery.intonationScale = config.intonationScale
   }
 
   // 音声合成
-  return await synthesize(audioQuery, settings.speakerId)
+  return await synthesize(audioQuery, speakerId)
 }

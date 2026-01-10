@@ -1,7 +1,13 @@
 import { Client, Events, GatewayIntentBits, MessageFlags, REST, Routes } from 'discord.js'
 import { commands, executeAutocomplete, executeCommand } from './commands'
 import { config } from './config'
-import { getGuildSettings, getUserSettings, preprocessForTts, textToSpeechWithSettings } from './utils'
+import {
+  getCurrentSpeakerConfig,
+  getCurrentSpeakerId,
+  getGuildSettings,
+  preprocessForTts,
+  textToSpeechWithSettings
+} from './utils'
 import { connectToChannel, destroyPlayer, disconnectFromChannel, enqueueAudio, getConnection } from './voice'
 
 /**
@@ -106,10 +112,11 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     const connection = existingConnection || getConnection(guildId)
     if (connection && guildSettings.announceJoin && newState.member) {
       try {
-        const userSettings = await getUserSettings(newState.member.user.id)
+        const speakerId = await getCurrentSpeakerId(newState.member.user.id)
+        const speakerConfig = await getCurrentSpeakerConfig(newState.member.user.id)
         const username = newState.member.displayName || newState.member.user.username
         const announceText = `${username}が参加しました`
-        const audioStream = await textToSpeechWithSettings(announceText, userSettings)
+        const audioStream = await textToSpeechWithSettings(announceText, speakerId, speakerConfig)
         enqueueAudio(guildId, audioStream, connection)
       } catch (error) {
         console.error('Failed to announce join:', error)
@@ -124,10 +131,11 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     const connection = getConnection(guildId)
     if (connection && guildSettings.announceLeave && newState.member) {
       try {
-        const userSettings = await getUserSettings(newState.member.user.id)
+        const speakerId = await getCurrentSpeakerId(newState.member.user.id)
+        const speakerConfig = await getCurrentSpeakerConfig(newState.member.user.id)
         const username = newState.member.displayName || newState.member.user.username
         const announceText = `${username}が退席しました`
-        const audioStream = await textToSpeechWithSettings(announceText, userSettings)
+        const audioStream = await textToSpeechWithSettings(announceText, speakerId, speakerConfig)
         enqueueAudio(guildId, audioStream, connection)
       } catch (error) {
         console.error('Failed to announce leave:', error)
@@ -207,10 +215,11 @@ client.on(Events.MessageCreate, async (message) => {
 
   try {
     // ユーザー設定を取得
-    const userSettings = await getUserSettings(message.author.id)
+    const speakerId = await getCurrentSpeakerId(message.author.id)
+    const speakerConfig = await getCurrentSpeakerConfig(message.author.id)
 
     // TTSで音声を生成
-    const audioStream = await textToSpeechWithSettings(processedText, userSettings)
+    const audioStream = await textToSpeechWithSettings(processedText, speakerId, speakerConfig)
 
     // キューに追加して再生
     enqueueAudio(guildId, audioStream, connection)

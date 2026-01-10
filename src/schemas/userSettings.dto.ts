@@ -1,11 +1,9 @@
 import { z } from 'zod'
 
 /**
- * ユーザー設定のスキーマ定義
+ * 話者ごとの詳細設定のスキーマ
  */
-export const UserSettingsSchema = z.object({
-  /** 話者ID（スタイルID） */
-  speakerId: z.number().int(),
+export const SpeakerConfigSchema = z.object({
   /** 話速（0.5〜2.0） */
   speedScale: z.number().min(0.5).max(2.0).default(1.0),
   /** 音高（-0.15〜0.15） */
@@ -17,11 +15,26 @@ export const UserSettingsSchema = z.object({
 })
 
 /**
+ * ユーザー設定のスキーマ定義
+ */
+export const UserSettingsSchema = z.object({
+  /** 現在選択中の話者ID（スタイルID） */
+  currentSpeakerId: z.number().int(),
+  /** 話者ごとの設定（話者IDをキーとする） */
+  speakerSettings: z.record(z.string(), SpeakerConfigSchema).default({})
+})
+
+/**
+ * 話者ごとの詳細設定の型
+ */
+export type SpeakerConfig = z.infer<typeof SpeakerConfigSchema>
+
+/**
  * ユーザー設定の型
  */
 export type UserSettings = z.infer<typeof UserSettingsSchema>
 
 /**
- * ユーザー設定の部分更新用の型
+ * 話者設定の部分更新用の型
  */
-export type UserSettingsUpdate = Partial<UserSettings>
+export type SpeakerConfigUpdate = Partial<SpeakerConfig>
