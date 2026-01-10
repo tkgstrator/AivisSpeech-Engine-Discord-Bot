@@ -13,17 +13,17 @@ export const dictionaryCommand = new SlashCommandBuilder()
       .setName('add')
       .setDescription('単語を追加します')
       .addStringOption((option) =>
-        option.setName('surface').setDescription('単語の表記（例: Discord）').setRequired(true),
+        option.setName('surface').setDescription('単語の表記（例: Discord）').setRequired(true)
       )
       .addStringOption((option) =>
-        option.setName('pronunciation').setDescription('読み方（カタカナ、例: ディスコード）').setRequired(true),
+        option.setName('pronunciation').setDescription('読み方（カタカナ、例: ディスコード）').setRequired(true)
       )
       .addIntegerOption((option) =>
         option
           .setName('accent')
           .setDescription('アクセント位置（0: 平板型、1以上: アクセントが下がる直前の位置）')
           .setRequired(true)
-          .setMinValue(0),
+          .setMinValue(0)
       )
       .addIntegerOption((option) =>
         option
@@ -31,16 +31,16 @@ export const dictionaryCommand = new SlashCommandBuilder()
           .setDescription('優先度（1〜9、デフォルト: 5）')
           .setRequired(false)
           .setMinValue(1)
-          .setMaxValue(9),
-      ),
+          .setMaxValue(9)
+      )
   )
   .addSubcommand((subcommand) =>
     subcommand
       .setName('remove')
       .setDescription('単語を削除します')
       .addStringOption((option) =>
-        option.setName('uuid').setDescription('削除する単語のUUID（listコマンドで確認できます）').setRequired(true),
-      ),
+        option.setName('uuid').setDescription('削除する単語のUUID（listコマンドで確認できます）').setRequired(true)
+      )
   )
 
 /**
@@ -71,7 +71,7 @@ export const handleDictionaryCommand = async (interaction: ChatInputCommandInter
           embed.addFields({
             name: word.surface,
             value: `読み: ${pronunciation}\nアクセント: ${accentType}\nUUID: \`${uuid}\``,
-            inline: true,
+            inline: true
           })
         }
 
@@ -99,7 +99,7 @@ export const handleDictionaryCommand = async (interaction: ChatInputCommandInter
           surface,
           pronunciation,
           accentType,
-          priority,
+          priority
         })
         await interaction.editReply(`単語を追加しました\n表記: ${surface}\n読み: ${pronunciation}\nUUID: \`${uuid}\``)
       } catch (error) {

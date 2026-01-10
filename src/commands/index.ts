@@ -2,19 +2,28 @@ import type { AutocompleteInteraction, ChatInputCommandInteraction } from 'disco
 import { configCommand, handleConfigCommand } from './config'
 import { dictionaryCommand, handleDictionaryCommand } from './dict'
 import { handleSpeakerAutocomplete, handleSpeakerCommand, speakerCommand } from './speaker'
+import { handleJoinCommand, handleLeaveCommand, joinCommand, leaveCommand } from './voice'
 
 /**
  * 全スラッシュコマンドの定義
  */
-export const commands = [speakerCommand.toJSON(), configCommand.toJSON(), dictionaryCommand.toJSON()]
+export const commands = [
+  joinCommand.toJSON(),
+  leaveCommand.toJSON(),
+  speakerCommand.toJSON(),
+  configCommand.toJSON(),
+  dictionaryCommand.toJSON()
+]
 
 /**
  * コマンドハンドラーのマップ
  */
 const commandHandlers: Record<string, (interaction: ChatInputCommandInteraction) => Promise<void>> = {
+  join: handleJoinCommand,
+  leave: handleLeaveCommand,
   speaker: handleSpeakerCommand,
   config: handleConfigCommand,
-  dictionary: handleDictionaryCommand,
+  dictionary: handleDictionaryCommand
 }
 
 /**

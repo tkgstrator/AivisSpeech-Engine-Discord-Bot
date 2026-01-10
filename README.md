@@ -202,17 +202,26 @@ bun run start
 - `/speaker list` - 利用可能な話者の一覧を表示
 - `/speaker set <name>` - 話者を設定（オートコンプリート対応）
 - `/speaker current` - 現在の話者設定を表示
+- `/speaker config show` - 現在の音声設定を表示
+- `/speaker config speed <value>` - 話速を設定（0.5〜2.0）
+- `/speaker config pitch <value>` - 音高を設定（-0.15〜0.15）
+- `/speaker config volume <value>` - 音量を設定（0.0〜2.0）
+- `/speaker config intonation <value>` - 抑揚を設定（0.0〜2.0）
+- `/speaker config reset` - 設定をデフォルトに戻す
 
-#### `/settings` - 設定管理
+#### `/config` - サーバー設定（管理者のみ）
 
-- `/settings show` - 現在の設定を表示
-- `/settings reset` - 設定をリセット
+- `/config show` - 現在のサーバー設定を表示
+- `/config read-non-vc <enabled>` - VCに参加していない人のチャット読み上げ
+- `/config announce-join <enabled>` - VC参加時のアナウンス
+- `/config announce-leave <enabled>` - VC退出時のアナウンス
+- `/config reset` - サーバー設定をデフォルトに戻す
 
-#### `/dict` - ユーザー辞書
+#### `/dictionary` - ユーザー辞書
 
-- `/dict add <word> <reading>` - 辞書に単語を追加
-- `/dict remove <word>` - 辞書から単語を削除
-- `/dict list` - 登録済みの単語一覧を表示
+- `/dictionary add <surface> <pronunciation> <accent>` - 辞書に単語を追加
+- `/dictionary remove <uuid>` - 辞書から単語を削除
+- `/dictionary list` - 登録済みの単語一覧を表示
 
 ### 基本的な使い方
 
