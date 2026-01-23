@@ -66,17 +66,17 @@ export const textToSpeechWithSettings = async (
   const audioQuery = await createAudioQuery(text, speakerId)
 
   // ユーザー設定を適用（デフォルト値と異なる場合のみ）
-  if (config.speedScale !== 1.0) {
-    audioQuery.speedScale = config.speedScale
+  if (config.speed !== 1.0) {
+    audioQuery.speedScale = config.speed
   }
-  if (config.pitchScale !== 0.0) {
-    audioQuery.pitchScale = config.pitchScale
+  if (config.pitch !== 0.0) {
+    audioQuery.pitchScale = config.pitch
   }
-  if (config.volumeScale !== 1.0) {
-    audioQuery.volumeScale = config.volumeScale
+  if (config.volume !== 1.0) {
+    audioQuery.volumeScale = config.volume
   }
-  if (config.intonationScale !== 1.0) {
-    audioQuery.intonationScale = config.intonationScale
+  if (config.intonation !== 1.0) {
+    audioQuery.intonationScale = config.intonation
   }
 
   // 音声合成

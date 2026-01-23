@@ -152,10 +152,10 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
             .setColor(0x00ae86)
             .addFields(
               { name: '話者ID', value: `${speakerId}`, inline: true },
-              { name: '話速', value: `${config.speedScale}`, inline: true },
-              { name: '音高', value: `${config.pitchScale}`, inline: true },
-              { name: '音量', value: `${config.volumeScale}`, inline: true },
-              { name: '抑揚', value: `${config.intonationScale}`, inline: true }
+              { name: '話速', value: `${config.speed}`, inline: true },
+              { name: '音高', value: `${config.pitch}`, inline: true },
+              { name: '音量', value: `${config.volume}`, inline: true },
+              { name: '抑揚', value: `${config.intonation}`, inline: true }
             )
 
           await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
@@ -185,7 +185,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           return
         }
         try {
-          await updateCurrentSpeakerConfig(userId, { speedScale: value })
+          await updateCurrentSpeakerConfig(userId, { speed: value })
           await interaction.reply({
             content: `話速を ${value} に設定しました`,
             flags: MessageFlags.Ephemeral
@@ -216,7 +216,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           return
         }
         try {
-          await updateCurrentSpeakerConfig(userId, { pitchScale: value })
+          await updateCurrentSpeakerConfig(userId, { pitch: value })
           await interaction.reply({
             content: `音高を ${value} に設定しました`,
             flags: MessageFlags.Ephemeral
@@ -247,7 +247,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           return
         }
         try {
-          await updateCurrentSpeakerConfig(userId, { volumeScale: value })
+          await updateCurrentSpeakerConfig(userId, { volume: value })
           await interaction.reply({
             content: `音量を ${value} に設定しました`,
             flags: MessageFlags.Ephemeral
@@ -278,7 +278,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           return
         }
         try {
-          await updateCurrentSpeakerConfig(userId, { intonationScale: value })
+          await updateCurrentSpeakerConfig(userId, { intonation: value })
           await interaction.reply({
             content: `抑揚を ${value} に設定しました`,
             flags: MessageFlags.Ephemeral
@@ -353,7 +353,7 @@ export const handleSpeakerCommand = async (interaction: ChatInputCommandInteract
           const styleId = firstStyle.id
           await setCurrentSpeakerId(interaction.user.id, styleId)
           await interaction.reply({
-            content: `話者を **${speaker.name}** (${firstStyle.name}) に設定しました`,
+            content: `話者を **${speaker.name}** に設定しました`,
             flags: MessageFlags.Ephemeral
           })
           return

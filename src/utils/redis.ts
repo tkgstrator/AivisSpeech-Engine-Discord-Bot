@@ -23,10 +23,10 @@ const USER_SETTINGS_KEY_PREFIX = 'user:settings:'
  * @returns デフォルト設定
  */
 const createDefaultSpeakerConfig = (): SpeakerConfig => ({
-  speedScale: 1.0,
-  pitchScale: 0.0,
-  volumeScale: 1.0,
-  intonationScale: 1.0
+  speed: 1.0,
+  pitch: 0.0,
+  volume: 1.0,
+  intonation: 1.0
 })
 
 /**
@@ -34,8 +34,10 @@ const createDefaultSpeakerConfig = (): SpeakerConfig => ({
  * @returns デフォルト設定
  */
 const createDefaultUserSettings = (): UserSettings => ({
-  currentSpeakerId: config.DEFAULT_SPEAKER_ID,
-  speakerSettings: {}
+  speaker: {
+    currentId: config.DEFAULT_SPEAKER_ID,
+    settings: {}
+  }
 })
 
 /**
@@ -80,7 +82,7 @@ export const setUserSettings = async (userId: string, settings: UserSettings): P
  */
 export const getCurrentSpeakerId = async (userId: string): Promise<number> => {
   const settings = await getUserSettings(userId)
-  return settings.currentSpeakerId
+  return settings.speaker.currentId
 }
 
 /**
@@ -90,7 +92,7 @@ export const getCurrentSpeakerId = async (userId: string): Promise<number> => {
  */
 export const setCurrentSpeakerId = async (userId: string, speakerId: number): Promise<void> => {
   const settings = await getUserSettings(userId)
-  settings.currentSpeakerId = speakerId
+  settings.speaker.currentId = speakerId
   await setUserSettings(userId, settings)
 }
 
@@ -102,8 +104,7 @@ export const setCurrentSpeakerId = async (userId: string, speakerId: number): Pr
  */
 export const getSpeakerConfig = async (userId: string, speakerId: number): Promise<SpeakerConfig> => {
   const settings = await getUserSettings(userId)
-  const speakerKey = speakerId.toString()
-  return settings.speakerSettings[speakerKey] ?? createDefaultSpeakerConfig()
+  return settings.speaker.settings[speakerId] ?? createDefaultSpeakerConfig()
 }
 
 /**
@@ -119,8 +120,7 @@ export const updateSpeakerConfig = async (
   update: SpeakerConfigUpdate
 ): Promise<SpeakerConfig> => {
   const settings = await getUserSettings(userId)
-  const speakerKey = speakerId.toString()
-  const current = settings.speakerSettings[speakerKey] ?? createDefaultSpeakerConfig()
+  const current = settings.speaker.settings[speakerId] ?? createDefaultSpeakerConfig()
   const updated = { ...current, ...update }
 
   // バリデーション
@@ -129,7 +129,7 @@ export const updateSpeakerConfig = async (
     throw new Error(`Invalid speaker config: ${parseResult.error.message}`)
   }
 
-  settings.speakerSettings[speakerKey] = parseResult.data
+  settings.speaker.settings[speakerId] = parseResult.data
   await setUserSettings(userId, settings)
   return parseResult.data
 }
@@ -141,7 +141,7 @@ export const updateSpeakerConfig = async (
  */
 export const getCurrentSpeakerConfig = async (userId: string): Promise<SpeakerConfig> => {
   const settings = await getUserSettings(userId)
-  return getSpeakerConfig(userId, settings.currentSpeakerId)
+  return getSpeakerConfig(userId, settings.speaker.currentId)
 }
 
 /**
@@ -155,7 +155,7 @@ export const updateCurrentSpeakerConfig = async (
   update: SpeakerConfigUpdate
 ): Promise<SpeakerConfig> => {
   const settings = await getUserSettings(userId)
-  return updateSpeakerConfig(userId, settings.currentSpeakerId, update)
+  return updateSpeakerConfig(userId, settings.speaker.currentId, update)
 }
 
 /**

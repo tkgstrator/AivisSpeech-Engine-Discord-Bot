@@ -4,10 +4,10 @@ import { SpeakerConfigSchema, SpeakerConfigUpdateSchema, UserSettingsSchema } fr
 describe('SpeakerConfigSchema', () => {
   test('正常な値でバリデーションが成功する', () => {
     const validData = {
-      speedScale: 1.0,
-      pitchScale: 0.0,
-      volumeScale: 1.0,
-      intonationScale: 1.0
+      speed: 1.0,
+      pitch: 0.0,
+      volume: 1.0,
+      intonation: 1.0
     }
     const result = SpeakerConfigSchema.safeParse(validData)
     expect(result.success).toBe(true)
@@ -17,63 +17,63 @@ describe('SpeakerConfigSchema', () => {
     const result = SpeakerConfigSchema.safeParse({})
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.speedScale).toBe(1.0)
-      expect(result.data.pitchScale).toBe(0.0)
-      expect(result.data.volumeScale).toBe(1.0)
-      expect(result.data.intonationScale).toBe(1.0)
+      expect(result.data.speed).toBe(1.0)
+      expect(result.data.pitch).toBe(0.0)
+      expect(result.data.volume).toBe(1.0)
+      expect(result.data.intonation).toBe(1.0)
     }
   })
 
-  test('speedScaleが範囲外の場合はバリデーションエラー', () => {
+  test('speedが範囲外の場合はバリデーションエラー', () => {
     const invalidData = {
-      speedScale: 0.3, // 0.5未満
-      pitchScale: 0.0,
-      volumeScale: 1.0,
-      intonationScale: 1.0
-    }
-    const result = SpeakerConfigSchema.safeParse(invalidData)
-    expect(result.success).toBe(false)
-  })
-
-  test('speedScaleが最大値を超える場合はバリデーションエラー', () => {
-    const invalidData = {
-      speedScale: 2.5, // 2.0超過
-      pitchScale: 0.0,
-      volumeScale: 1.0,
-      intonationScale: 1.0
+      speed: 0.3, // 0.5未満
+      pitch: 0.0,
+      volume: 1.0,
+      intonation: 1.0
     }
     const result = SpeakerConfigSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
 
-  test('pitchScaleが範囲外の場合はバリデーションエラー', () => {
+  test('speedが最大値を超える場合はバリデーションエラー', () => {
     const invalidData = {
-      speedScale: 1.0,
-      pitchScale: 0.2, // 0.15超過
-      volumeScale: 1.0,
-      intonationScale: 1.0
+      speed: 2.5, // 2.0超過
+      pitch: 0.0,
+      volume: 1.0,
+      intonation: 1.0
     }
     const result = SpeakerConfigSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
 
-  test('volumeScaleが範囲外の場合はバリデーションエラー', () => {
+  test('pitchが範囲外の場合はバリデーションエラー', () => {
     const invalidData = {
-      speedScale: 1.0,
-      pitchScale: 0.0,
-      volumeScale: -0.1, // 0.0未満
-      intonationScale: 1.0
+      speed: 1.0,
+      pitch: 0.2, // 0.15超過
+      volume: 1.0,
+      intonation: 1.0
     }
     const result = SpeakerConfigSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
 
-  test('intonationScaleが範囲外の場合はバリデーションエラー', () => {
+  test('volumeが範囲外の場合はバリデーションエラー', () => {
     const invalidData = {
-      speedScale: 1.0,
-      pitchScale: 0.0,
-      volumeScale: 1.0,
-      intonationScale: 2.5 // 2.0超過
+      speed: 1.0,
+      pitch: 0.0,
+      volume: -0.1, // 0.0未満
+      intonation: 1.0
+    }
+    const result = SpeakerConfigSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+  })
+
+  test('intonationが範囲外の場合はバリデーションエラー', () => {
+    const invalidData = {
+      speed: 1.0,
+      pitch: 0.0,
+      volume: 1.0,
+      intonation: 2.5 // 2.0超過
     }
     const result = SpeakerConfigSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
@@ -83,16 +83,16 @@ describe('SpeakerConfigSchema', () => {
 describe('SpeakerConfigUpdateSchema', () => {
   test('部分的な更新が可能', () => {
     const partialData = {
-      speedScale: 1.5
+      speed: 1.5
     }
     const result = SpeakerConfigUpdateSchema.safeParse(partialData)
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.speedScale).toBe(1.5)
+      expect(result.data.speed).toBe(1.5)
       // partial()はデフォルト値も適用されるため、他のフィールドもデフォルト値になる
-      expect(result.data.pitchScale).toBe(0.0)
-      expect(result.data.volumeScale).toBe(1.0)
-      expect(result.data.intonationScale).toBe(1.0)
+      expect(result.data.pitch).toBe(0.0)
+      expect(result.data.volume).toBe(1.0)
+      expect(result.data.intonation).toBe(1.0)
     }
   })
 
@@ -103,7 +103,7 @@ describe('SpeakerConfigUpdateSchema', () => {
 
   test('範囲外の値は拒否', () => {
     const invalidData = {
-      speedScale: 3.0 // 2.0超過
+      speed: 3.0 // 2.0超過
     }
     const result = SpeakerConfigUpdateSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
@@ -113,13 +113,15 @@ describe('SpeakerConfigUpdateSchema', () => {
 describe('UserSettingsSchema', () => {
   test('正常な値でバリデーションが成功する', () => {
     const validData = {
-      currentSpeakerId: 123,
-      speakerSettings: {
-        '123': {
-          speedScale: 1.2,
-          pitchScale: 0.05,
-          volumeScale: 1.0,
-          intonationScale: 1.0
+      speaker: {
+        currentId: 123,
+        settings: {
+          123: {
+            speed: 1.2,
+            pitch: 0.05,
+            volume: 1.0,
+            intonation: 1.0
+          }
         }
       }
     }
@@ -127,54 +129,46 @@ describe('UserSettingsSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  test('speakerSettingsのデフォルト値が適用される', () => {
+  test('speaker.settingsのデフォルト値が適用される', () => {
     const minimalData = {
-      currentSpeakerId: 456
+      speaker: {
+        currentId: 456
+      }
     }
     const result = UserSettingsSchema.safeParse(minimalData)
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.speakerSettings).toEqual({})
+      expect(result.data.speaker.settings).toEqual({})
     }
   })
 
-  test('currentSpeakerIdが整数でない場合はバリデーションエラー', () => {
+  test('currentIdが整数でない場合はバリデーションエラー', () => {
     const invalidData = {
-      currentSpeakerId: 123.45,
-      speakerSettings: {}
-    }
-    const result = UserSettingsSchema.safeParse(invalidData)
-    expect(result.success).toBe(false)
-  })
-
-  test('currentSpeakerIdが負の値の場合はバリデーションエラー', () => {
-    const invalidData = {
-      currentSpeakerId: -1,
-      speakerSettings: {}
+      speaker: {
+        currentId: 123.45,
+        settings: {}
+      }
     }
     const result = UserSettingsSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
 
-  test('currentSpeakerIdが0の場合はバリデーションエラー', () => {
+  test('currentIdが負の値の場合はバリデーションエラー', () => {
     const invalidData = {
-      currentSpeakerId: 0,
-      speakerSettings: {}
+      speaker: {
+        currentId: -1,
+        settings: {}
+      }
     }
     const result = UserSettingsSchema.safeParse(invalidData)
     expect(result.success).toBe(false)
   })
 
-  test('speakerSettingsのキーが数字以外の場合はバリデーションエラー', () => {
+  test('currentIdが0の場合はバリデーションエラー', () => {
     const invalidData = {
-      currentSpeakerId: 123,
-      speakerSettings: {
-        'invalid-key': {
-          speedScale: 1.0,
-          pitchScale: 0.0,
-          volumeScale: 1.0,
-          intonationScale: 1.0
-        }
+      speaker: {
+        currentId: 0,
+        settings: {}
       }
     }
     const result = UserSettingsSchema.safeParse(invalidData)
@@ -183,19 +177,21 @@ describe('UserSettingsSchema', () => {
 
   test('複数の話者設定が可能', () => {
     const validData = {
-      currentSpeakerId: 123,
-      speakerSettings: {
-        '123': {
-          speedScale: 1.2,
-          pitchScale: 0.05,
-          volumeScale: 1.0,
-          intonationScale: 1.0
-        },
-        '456': {
-          speedScale: 0.8,
-          pitchScale: -0.1,
-          volumeScale: 1.5,
-          intonationScale: 0.9
+      speaker: {
+        currentId: 123,
+        settings: {
+          123: {
+            speed: 1.2,
+            pitch: 0.05,
+            volume: 1.0,
+            intonation: 1.0
+          },
+          456: {
+            speed: 0.8,
+            pitch: -0.1,
+            volume: 1.5,
+            intonation: 0.9
+          }
         }
       }
     }
