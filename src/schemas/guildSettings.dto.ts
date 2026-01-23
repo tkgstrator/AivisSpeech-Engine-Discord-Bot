@@ -5,11 +5,13 @@ import { z } from 'zod'
  */
 export const GuildSettingsSchema = z.object({
   /** VCに参加していないユーザーのチャットを読み上げるか */
-  readNonVcUsers: z.boolean().default(false),
+  readNonVcUsers: z.boolean().default(true),
   /** ユーザーのVC参加時に「XXが参加しました」と読み上げるか */
-  announceJoin: z.boolean().default(false),
+  announceJoin: z.boolean().default(true),
   /** ユーザーのVC退出時に「XXが退席しました」と読み上げるか */
-  announceLeave: z.boolean().default(false)
+  announceLeave: z.boolean().default(true),
+  /** 読み上げ対象のチャンネルIDリスト（空の場合は全チャンネル） */
+  readChannels: z.array(z.string()).default([])
 })
 
 /**

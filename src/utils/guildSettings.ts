@@ -5,9 +5,10 @@ import { redis } from './redis'
  * デフォルトのギルド設定
  */
 const defaultGuildSettings: GuildSettings = {
-  readNonVcUsers: false,
-  announceJoin: false,
-  announceLeave: false
+  readNonVcUsers: true,
+  announceJoin: true,
+  announceLeave: true,
+  readChannels: []
 }
 
 /**

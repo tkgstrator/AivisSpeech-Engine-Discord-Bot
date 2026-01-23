@@ -174,7 +174,8 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 /**
  * メッセージ受信時のTTS処理
  * - Botがギルドに接続中の場合のみ処理
- * - 送信者がVCにいる場合のみ読み上げ（readNonVcUsersがtrueの場合は例外）
+ * - readNonVcUsersがfalseの場合: Botと同じVCにいるユーザーのみ読み上げ
+ * - readNonVcUsersがtrueの場合: VC外のユーザーも読み上げ
  */
 client.on(Events.MessageCreate, async (message) => {
   // Botのメッセージは無視
@@ -195,19 +196,33 @@ client.on(Events.MessageCreate, async (message) => {
   // ギルド設定を取得
   const guildSettings = await getGuildSettings(guildId)
 
-  // 送信者がVCにいるか確認
+  // 送信者の情報を取得
   const member = message.member
-  const isInVoiceChannel = member?.voice.channel !== null && member?.voice.channel !== undefined
 
   // BotがいるVCと同じか確認
   const botVoiceChannelId = message.guild.members.me?.voice.channelId
   const isInSameChannel = member?.voice.channelId === botVoiceChannelId
 
-  // readNonVcUsersがfalseの場合、VCにいない人のメッセージは無視
-  if (!guildSettings.readNonVcUsers && !isInVoiceChannel) return
+  // 1. VCのテキストチャンネルかどうか → YESなら読み上げる
+  const isVcTextChannel = message.channel.id === botVoiceChannelId
+  if (isVcTextChannel) {
+    // VCのテキストチャンネルなので読み上げ処理へ
+  } else {
+    // 2. 読み上げチャンネルに登録されているかどうか → NOなら読み上げない
+    if (guildSettings.readChannels.length > 0 && !guildSettings.readChannels.includes(message.channel.id)) {
+      return
+    }
 
-  // readNonVcUsersがtrueでもBotと同じVCにいない場合は無視
-  if (!isInSameChannel) return
+    // 3. 書き込んだユーザーはVCに参加しているか → しているなら読み上げる
+    if (isInSameChannel) {
+      // VCに参加しているので読み上げ処理へ
+    } else {
+      // 4. VC外ユーザー読み上げ設定が有効か → 有効なら読み上げる、そうでないなら読み上げない
+      if (!guildSettings.readNonVcUsers) {
+        return
+      }
+    }
+  }
 
   // テキストを前処理
   const processedText = preprocessForTts(message.content)
