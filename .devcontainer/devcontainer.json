@@ -47,8 +47,8 @@
         "eamodio.gitlens",
         "jebbs.markdown-extended",
         "ms-vscode.vscode-typescript-next",
+        "pHofer94.vscode-taskviewexplorer",
         "redhat.vscode-yaml",
-        "spmeesseman.vscode-taskexplorer",
         "tamasfe.even-better-toml",
         "vsls-contrib.gitdoc"
       ],
