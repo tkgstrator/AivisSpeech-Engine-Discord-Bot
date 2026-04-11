@@ -38,8 +38,8 @@ export const addUserDictWord = async (params: AddWordParams): Promise<string> =>
       pronunciation: [pronunciation],
       accent_type: [accentType],
       word_type: wordType,
-      priority,
-    },
+      priority
+    }
   })
 }
 

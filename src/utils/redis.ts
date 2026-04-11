@@ -167,26 +167,6 @@ export const deleteUserSettings = async (userId: string): Promise<void> => {
 }
 
 /**
- * ユーザーの話者IDを取得する（後方互換性のため残す）
- * @param userId DiscordユーザーID
- * @returns 話者ID
- * @deprecated getCurrentSpeakerIdを使用してください
- */
-export const getUserSpeakerId = async (userId: string): Promise<number> => {
-  return getCurrentSpeakerId(userId)
-}
-
-/**
- * ユーザーの話者IDを設定する（後方互換性のため残す）
- * @param userId DiscordユーザーID
- * @param speakerId 話者ID
- * @deprecated setCurrentSpeakerIdを使用してください
- */
-export const setUserSpeakerId = async (userId: string, speakerId: number): Promise<void> => {
-  await setCurrentSpeakerId(userId, speakerId)
-}
-
-/**
  * Redisへの接続確認
  */
 export const pingRedis = async (): Promise<boolean> => {
