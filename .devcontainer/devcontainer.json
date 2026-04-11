@@ -5,10 +5,19 @@
   "workspaceFolder": "/home/vscode/app",
   "shutdownAction": "stopCompose",
   "remoteUser": "vscode",
+  "remoteEnv": {
+    "CLOUDFLARE_API_TOKEN": "${localEnv:CLOUDFLARE_API_TOKEN}",
+    "CLOUDFLARE_ACCOUNT_ID": "${localEnv:CLOUDFLARE_ACCOUNT_ID}",
+    "WAKATIME_API_KEY": "${localEnv:WAKATIME_API_KEY}"
+  },
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+  },
   "mounts": [
-    "source=${env:HOME}/home/vscode/.ssh,target=/.ssh,type=bind,consistency=cached,readonly"
+    "source=${env:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached,readonly",
+    "source=${env:HOME}/.aws,target=/home/vscode/.aws,type=bind,consistency=cached,readonly",
+    "source=${env:HOME}/.claude,target=/home/vscode/.claude,type=bind,consistency=cached"
   ],
-  "remoteEnv": {},
   "features": {
     "ghcr.io/devcontainers/features/git:1": {
       "version": "2.52.0"
@@ -23,6 +32,7 @@
     },
     "ghcr.io/devcontainers-extra/features/fzf:1": {},
     "ghcr.io/devcontainers/features/aws-cli:1": {},
+    "ghcr.io/stu-bell/devcontainer-features/claude-code:0": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
       "moby": false,
       "dockerDashComposeVersion": "v2"
@@ -33,6 +43,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "Anthropic.claude-code",
         "EditorConfig.EditorConfig",
         "GitHub.copilot",
         "GitHub.copilot-chat",

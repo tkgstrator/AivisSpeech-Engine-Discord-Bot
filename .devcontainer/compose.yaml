@@ -11,6 +11,9 @@ services:
         condition: service_healthy
       aivis:
         condition: service_healthy
+    environment:
+      NODE_OPTIONS: --no-deprecation
+      NODE_ENV: development
     stdin_open: true
     tty: true
 
@@ -24,7 +27,7 @@ services:
   redis:
     image: redis:8.4.0
     volumes:
-      - redis-data:/data
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -35,7 +38,5 @@ services:
 volumes:
   node_modules:
     driver: local
-    name: node_modules
-  redis-data:
+  redis_data:
     driver: local
-    name: redis-data
