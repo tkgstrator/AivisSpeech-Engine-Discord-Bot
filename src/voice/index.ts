@@ -1,2 +1,2 @@
 export { connectToChannel, disconnectFromChannel, getConnection } from './connection'
-export { enqueueAudio, clearQueue, destroyPlayer } from './player'
+export { clearQueue, destroyPlayer, enqueueAudio } from './player'

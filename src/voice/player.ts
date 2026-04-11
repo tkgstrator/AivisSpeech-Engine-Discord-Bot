@@ -8,6 +8,7 @@ import {
   type VoiceConnection,
   VoiceConnectionStatus
 } from '@discordjs/voice'
+import { notifyError } from '../utils/notifier'
 
 /**
  * ギルドごとのAudioPlayerとキューを管理するマップ
@@ -53,6 +54,7 @@ const getOrCreatePlayer = (guildId: string, connection: VoiceConnection) => {
 
     player.on('error', (error) => {
       console.error(`Audio player error in guild ${guildId}:`, error)
+      void notifyError('Audio player error', error, { guildId })
       const gp = guildPlayers.get(guildId)
       if (gp) {
         gp.isPlaying = false
@@ -81,9 +83,17 @@ const getOrCreatePlayer = (guildId: string, connection: VoiceConnection) => {
 
 /**
  * Bufferを再生する（内部用）
+ * 接続がDestroyed状態の場合はスキップする
  */
 const playBuffer = async (guildId: string, buffer: Buffer, connection: VoiceConnection): Promise<void> => {
   console.debug('Playing buffer for guild:', guildId, 'size:', buffer.length)
+
+  // 接続が破棄済みの場合はスキップ
+  if (connection.state.status === VoiceConnectionStatus.Destroyed) {
+    console.warn(`Skipping playback: connection destroyed in guild ${guildId}`)
+    destroyPlayer(guildId)
+    return
+  }
 
   // VoiceConnectionがReadyになるまで待機
   if (connection.state.status !== VoiceConnectionStatus.Ready) {
