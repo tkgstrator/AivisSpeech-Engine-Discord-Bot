@@ -368,6 +368,7 @@ pyrightconfig.json
 [Ll]ib64
 [Ll]ocal
 [Ss]cripts
+!.vscode/scripts/
 pyvenv.cfg
 pip-selfcheck.json
 
