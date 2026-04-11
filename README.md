@@ -11,11 +11,14 @@ Discord の音声チャンネルに参加して、テキストチャンネルの
 - ユーザーごとに話者設定を保存
 - ユーザー辞書機能（読み方のカスタマイズ）
 - Redis を使用した設定の永続化
+- ボイス接続の自動リカバリ（通信エラー時の再接続）
+- Discord Webhook によるエラー通知
 
 ## 技術スタック
 
-- **Runtime**: [Bun](https://bun.com) v1.3.5
+- **Runtime**: [Bun](https://bun.com)
 - **言語**: TypeScript
+- **Linter / Formatter**: [Biome](https://biomejs.dev/)
 - **主要ライブラリ**:
   - [discord.js](https://discord.js.org/) - Discord API クライアント
   - [@discordjs/voice](https://discordjs.guide/voice/) - 音声機能
@@ -57,6 +60,10 @@ DEFAULT_SPEAKER_ID=1633968992
 
 # Redis URL (デフォルト: redis://redis:6379)
 REDIS_URL=redis://redis:6379
+
+# エラー通知用 Discord Webhook URL (任意)
+# 設定するとエラー発生時にWebhookへ通知を送信します
+ERROR_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/yyy
 ```
 
 ### 2. Docker Compose で起動
@@ -105,7 +112,7 @@ services:
   redis:
     image: redis:8.4.0
     volumes:
-      - redis-data:/data
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -113,8 +120,8 @@ services:
       retries: 5
 
 volumes:
-  redis-data:
-    name: redis-data
+  redis_data:
+    name: redis_data
 ```
 
 **ボリュームマウントについて:**
@@ -123,7 +130,7 @@ volumes:
   - AivisSpeech Engine のモデルデータや設定を直接操作できます
   - 新しいモデル(`aivmx`形式)を追加する場合は、`AivisSpeech-Engine-Dev/Models` ディレクトリに直接配置可能
   - ホスト側から簡単にバックアップや管理が可能
-- `redis` サービス: 名前付きボリューム（`redis-data`）を使用
+- `redis` サービス: 名前付きボリューム（`redis_data`）を使用
   - Redis のデータは Docker が管理し、直接操作する必要がないため
 
 ### カスタマイズ例
@@ -164,7 +171,7 @@ services:
     ports:
       - 6379:6379
     volumes:
-      - redis-data:/data
+      - redis_data:/data
 ```
 
 ## 開発
@@ -179,6 +186,22 @@ bun install
 
 ```bash
 bun run dev
+```
+
+### Lint
+
+```bash
+# チェックのみ
+bun run lint
+
+# 自動修正
+bun run lint:fix
+```
+
+### フォーマット
+
+```bash
+bun run format
 ```
 
 ### ビルド
