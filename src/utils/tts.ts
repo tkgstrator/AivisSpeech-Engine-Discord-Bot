@@ -1,8 +1,10 @@
 import axios from 'axios'
+import { z } from 'zod'
 import { config } from '../config'
 import type { AudioQuery, Speaker } from '../schemas/aivis.dto'
 import type { SpeakerConfig } from '../schemas/userSettings.dto'
 import { aivisClient } from './client'
+import { notifyError } from './notifier'
 
 /**
  * 話者一覧を取得する
@@ -81,4 +83,62 @@ export const textToSpeechWithSettings = async (
 
   // 音声合成
   return await synthesize(audioQuery, speakerId)
+}
+
+/**
+ * AIVMモデル情報のスキーマ
+ */
+const AivmModelSchema = z.object({
+  is_loaded: z.boolean(),
+  is_default_model: z.boolean().optional(),
+  manifest: z.object({
+    name: z.string(),
+    uuid: z.string()
+  })
+})
+
+/**
+ * インストール済みのモデルを事前にロードする
+ * デフォルトモデルはアンロードし、ユーザーがインストールしたモデルのみロードする
+ * Bot起動時に呼び出すことで、初回の音声合成レイテンシを削減する
+ */
+export const preloadModels = async (): Promise<void> => {
+  console.log('Preloading AivisSpeech models...')
+  try {
+    const res = await axios.get<Record<string, unknown>>(`${config.AIVIS_BASE_URL}/aivm_models`)
+    const models = res.data
+
+    for (const [uuid, raw] of Object.entries(models)) {
+      const parsed = AivmModelSchema.safeParse(raw)
+      if (!parsed.success) {
+        console.warn(`Skipping invalid model entry: ${uuid}`)
+        continue
+      }
+      const model = parsed.data
+
+      // デフォルトモデルはアンロード
+      if (model.is_default_model) {
+        if (model.is_loaded) {
+          console.log(`  Unloading default model: ${model.manifest.name} ...`)
+          await axios.post(`${config.AIVIS_BASE_URL}/aivm_models/${uuid}/unload`)
+          console.log(`  Unloaded: ${model.manifest.name}`)
+        } else {
+          console.log(`  Skipping default model: ${model.manifest.name}`)
+        }
+        continue
+      }
+
+      if (model.is_loaded) {
+        console.log(`  Already loaded: ${model.manifest.name}`)
+        continue
+      }
+      console.log(`  Loading: ${model.manifest.name} ...`)
+      await axios.post(`${config.AIVIS_BASE_URL}/aivm_models/${uuid}/load`)
+      console.log(`  Loaded: ${model.manifest.name}`)
+    }
+
+    console.log('All models preloaded successfully')
+  } catch (error) {
+    await notifyError('Failed to preload models', error)
+  }
 }

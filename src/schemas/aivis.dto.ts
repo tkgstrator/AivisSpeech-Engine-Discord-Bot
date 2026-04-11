@@ -9,7 +9,7 @@ export const MoraSchema = z.object({
   consonant_length: z.number().nullable().optional(),
   vowel: z.string(),
   vowel_length: z.number(),
-  pitch: z.number(),
+  pitch: z.number()
 })
 
 /**
@@ -19,7 +19,7 @@ export const AccentPhraseSchema = z.object({
   moras: z.array(MoraSchema),
   accent: z.number(),
   pause_mora: MoraSchema.nullable().optional(),
-  is_interrogative: z.boolean().optional(),
+  is_interrogative: z.boolean().optional()
 })
 
 /**
@@ -38,7 +38,7 @@ export const AudioQuerySchema = z.object({
   pauseLengthScale: z.number().optional(),
   outputSamplingRate: z.number(),
   outputStereo: z.boolean(),
-  kana: z.string().optional(),
+  kana: z.string().optional()
 })
 
 /**
@@ -47,14 +47,14 @@ export const AudioQuerySchema = z.object({
 export const SpeakerStyleSchema = z.object({
   name: z.string(),
   id: z.number(),
-  type: z.enum(['talk', 'singing_teacher', 'frame_decode', 'sing']).optional(),
+  type: z.enum(['talk', 'singing_teacher', 'frame_decode', 'sing']).optional()
 })
 
 /**
  * スピーカー対応機能
  */
 export const SpeakerSupportedFeaturesSchema = z.object({
-  permitted_synthesis_morphing: z.enum(['ALL', 'SELF_ONLY', 'NOTHING']).optional(),
+  permitted_synthesis_morphing: z.enum(['ALL', 'SELF_ONLY', 'NOTHING']).optional()
 })
 
 /**
@@ -65,7 +65,7 @@ export const SpeakerSchema = z.object({
   speaker_uuid: z.string(),
   styles: z.array(SpeakerStyleSchema),
   version: z.string().optional(),
-  supported_features: SpeakerSupportedFeaturesSchema.optional(),
+  supported_features: SpeakerSupportedFeaturesSchema.optional()
 })
 
 /**
@@ -79,11 +79,11 @@ export const SpeakersResponseSchema = z.array(SpeakerSchema)
 export const ValidationErrorSchema = z.object({
   loc: z.array(z.union([z.string(), z.number()])),
   msg: z.string(),
-  type: z.string(),
+  type: z.string()
 })
 
 export const HTTPValidationErrorSchema = z.object({
-  detail: z.array(ValidationErrorSchema).optional(),
+  detail: z.array(ValidationErrorSchema).optional()
 })
 
 /**
@@ -99,7 +99,7 @@ export const WordTypesSchema = z.enum([
   'COMMON_NOUN',
   'VERB',
   'ADJECTIVE',
-  'SUFFIX',
+  'SUFFIX'
 ])
 
 /**
@@ -121,7 +121,7 @@ export const UserDictWordSchema = z.object({
   pronunciation: z.array(z.string()),
   accent_type: z.array(z.number().int()),
   mora_count: z.array(z.number().int()).optional(),
-  accent_associative_rule: z.string(),
+  accent_associative_rule: z.string()
 })
 
 /**
