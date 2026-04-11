@@ -7,7 +7,9 @@ const EnvSchema = z.object({
   DISCORD_TOKEN: z.string().min(1, 'DISCORD_TOKEN is required'),
   AIVIS_BASE_URL: z.string().url().default('http://aivis:10101'),
   DEFAULT_SPEAKER_ID: z.coerce.number().int().default(1633968992),
-  REDIS_URL: z.string().default('redis://redis:6379')
+  REDIS_URL: z.string().default('redis://redis:6379'),
+  /** エラー通知用のDiscord Webhook URL（任意） */
+  ERROR_WEBHOOK_URL: z.string().url().optional()
 })
 
 /**
