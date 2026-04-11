@@ -5,9 +5,11 @@ import {
   getCurrentSpeakerConfig,
   getCurrentSpeakerId,
   getGuildSettings,
+  preloadModels,
   preprocessForTts,
   textToSpeechWithSettings
 } from './utils'
+import { notifyError } from './utils/notifier'
 import { connectToChannel, destroyPlayer, disconnectFromChannel, enqueueAudio, getConnection } from './voice'
 
 /**
@@ -42,6 +44,7 @@ const registerCommands = async (clientId: string): Promise<void> => {
 client.once(Events.ClientReady, async (readyClient) => {
   console.log(`Bot is ready! Logged in as ${readyClient.user.tag}`)
   await registerCommands(readyClient.user.id)
+  await preloadModels()
 })
 
 /**
@@ -63,7 +66,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
   try {
     await executeCommand(interaction)
   } catch (error) {
-    console.error('Command execution error:', error)
+    await notifyError('Command execution error', error, {
+      command: interaction.commandName,
+      guildId: interaction.guildId ?? 'unknown'
+    })
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
         content: 'コマンドの実行中にエラーが発生しました',
@@ -80,12 +86,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 /**
  * ボイスステート変更時の処理
+ * - Bot自身がVCから切断された場合 → プレイヤーをクリーンアップ
  * - ユーザーがVCに参加 → Botも参加 + アナウンス
  * - VCが空になった → Botは離脱
  * - ユーザーがVCから離脱 → アナウンス
  */
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   const guildId = newState.guild.id
+
+  // Bot自身のVCからの切断を検知 → プレイヤーをクリーンアップ
+  if (newState.member?.id === newState.client.user?.id) {
+    if (oldState.channel && !newState.channel) {
+      console.log(`Bot was disconnected from VC in guild: ${guildId}`)
+      destroyPlayer(guildId)
+    }
+    return
+  }
 
   // Botの状態変更は無視
   if (newState.member?.user.bot) {
@@ -104,7 +120,7 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
       try {
         await connectToChannel(newState.channel)
       } catch (error) {
-        console.error('Failed to connect to voice channel:', error)
+        await notifyError('Failed to connect to voice channel', error, { guildId })
       }
     }
 
@@ -119,7 +135,7 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
         const audioStream = await textToSpeechWithSettings(announceText, speakerId, speakerConfig)
         enqueueAudio(guildId, audioStream, connection)
       } catch (error) {
-        console.error('Failed to announce join:', error)
+        await notifyError('Failed to announce join', error, { guildId })
       }
     }
     return
@@ -127,6 +143,15 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 
   // ユーザーがVCから離脱した場合
   if (oldState.channel && !newState.channel) {
+    // 残っているメンバーをチェック（Bot除く） → 先にチェックして空なら即離脱
+    const remainingMembers = oldState.channel.members.filter((member) => !member.user.bot)
+
+    if (remainingMembers.size === 0) {
+      destroyPlayer(guildId)
+      disconnectFromChannel(guildId)
+      return
+    }
+
     // 離脱アナウンス
     const connection = getConnection(guildId)
     if (connection && guildSettings.announceLeave && newState.member) {
@@ -138,17 +163,8 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
         const audioStream = await textToSpeechWithSettings(announceText, speakerId, speakerConfig)
         enqueueAudio(guildId, audioStream, connection)
       } catch (error) {
-        console.error('Failed to announce leave:', error)
+        await notifyError('Failed to announce leave', error, { guildId })
       }
-    }
-
-    // 残っているメンバーをチェック（Bot除く）
-    const remainingMembers = oldState.channel.members.filter((member) => !member.user.bot)
-
-    // 誰もいなくなったら離脱
-    if (remainingMembers.size === 0) {
-      destroyPlayer(guildId)
-      disconnectFromChannel(guildId)
     }
     return
   }
@@ -161,10 +177,10 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     if (remainingInOld.size === 0) {
       // 新しいチャンネルに移動
       try {
+        destroyPlayer(guildId)
         await connectToChannel(newState.channel)
       } catch (error) {
-        console.error('Failed to move to new voice channel:', error)
-        destroyPlayer(guildId)
+        await notifyError('Failed to move to new voice channel', error, { guildId })
         disconnectFromChannel(guildId)
       }
     }
@@ -239,7 +255,7 @@ client.on(Events.MessageCreate, async (message) => {
     // キューに追加して再生
     enqueueAudio(guildId, audioStream, connection)
   } catch (error) {
-    console.error('Failed to process TTS:', error)
+    await notifyError('Failed to process TTS', error, { guildId })
   }
 })
 
